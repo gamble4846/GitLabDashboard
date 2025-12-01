@@ -59,6 +59,11 @@ export class PinService {
     return [...this._pinnedIds()];
   }
 
+  setPinnedOrder(ids: number[]): void {
+    this._pinnedIds.set([...ids]);
+    this.savePinnedIds();
+  }
+
   clearPinned(): void {
     this._pinnedIds.set([]);
     localStorage.removeItem(this.STORAGE_KEY);

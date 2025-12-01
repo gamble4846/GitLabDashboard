@@ -42,6 +42,14 @@
         >
           Pipelines
         </a>
+        <a 
+          routerLink="/settings" 
+          routerLinkActive="active" 
+          class="nav-link"
+          (click)="closeMobileMenu()"
+        >
+          Settings
+        </a>
         <button 
           class="nav-link logout-button"
           (click)="logout()"
@@ -64,6 +72,14 @@
           (click)="closeMobileMenu()"
         >
           Login
+        </a>
+        <a 
+          routerLink="/settings" 
+          routerLinkActive="active" 
+          class="nav-link"
+          (click)="closeMobileMenu()"
+        >
+          Import Settings
         </a>
       }
     </nav>
