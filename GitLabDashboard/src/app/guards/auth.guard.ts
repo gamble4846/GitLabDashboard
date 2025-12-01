@@ -19,7 +19,7 @@ export const loginGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
 
   if (authService.hasCredentials()) {
-    router.navigate(['/pipelines']);
+    router.navigate(['/home']);
     return false;
   }
 
