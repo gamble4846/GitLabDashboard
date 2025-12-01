@@ -78,5 +78,14 @@ export class GitLabService {
       })
     );
   }
+
+  retryPipeline(projectId: number, pipelineId: number): Observable<GitLabPipeline> {
+    const headers = this.getHeaders();
+    return this.http.post<GitLabPipeline>(
+      `${this.getBaseUrl()}/projects/${projectId}/pipelines/${pipelineId}/retry`,
+      {},
+      { headers }
+    );
+  }
 }
 

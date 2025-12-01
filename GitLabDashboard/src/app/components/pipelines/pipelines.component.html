@@ -86,9 +86,27 @@
                 </div>
               </div>
 
-              <a [href]="project.pipeline.web_url" target="_blank" rel="noopener" class="pipeline-link">
-                View Pipeline Details
-              </a>
+              <div class="pipeline-actions">
+                @if (canRetryPipeline(project.pipeline.status)) {
+                  <button 
+                    class="btn btn-secondary retry-button" 
+                    (click)="retryPipeline(project)"
+                    [disabled]="isRetrying(project.id)"
+                    [title]="'Retry pipeline'"
+                    aria-label="Retry pipeline"
+                  >
+                    @if (isRetrying(project.id)) {
+                      <span class="retry-spinner">⟳</span>
+                      <span>Retrying...</span>
+                    } @else {
+                      <span>Retry Pipeline</span>
+                    }
+                  </button>
+                }
+                <a [href]="project.pipeline.web_url" target="_blank" rel="noopener" class="pipeline-link">
+                  View Details
+                </a>
+              </div>
             </div>
           } @else {
             <div class="pipeline-info">
@@ -161,9 +179,27 @@
                 </div>
               </div>
 
-              <a [href]="project.pipeline.web_url" target="_blank" rel="noopener" class="pipeline-link">
-                View Pipeline Details
-              </a>
+              <div class="pipeline-actions">
+                @if (canRetryPipeline(project.pipeline.status)) {
+                  <button 
+                    class="btn btn-secondary retry-button" 
+                    (click)="retryPipeline(project)"
+                    [disabled]="isRetrying(project.id)"
+                    [title]="'Retry pipeline'"
+                    aria-label="Retry pipeline"
+                  >
+                    @if (isRetrying(project.id)) {
+                      <span class="retry-spinner">⟳</span>
+                      <span>Retrying...</span>
+                    } @else {
+                      <span>Retry Pipeline</span>
+                    }
+                  </button>
+                }
+                <a [href]="project.pipeline.web_url" target="_blank" rel="noopener" class="pipeline-link">
+                  View Details
+                </a>
+              </div>
             </div>
           } @else {
             <div class="pipeline-info">

@@ -184,12 +184,48 @@
   color: var(--foreground);
 }
 
+.pipeline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.retry-button {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.retry-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.retry-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .pipeline-link {
   color: var(--accent);
   text-decoration: none;
   font-size: 0.875rem;
   transition: color 0.2s ease;
-  margin-top: 0.25rem;
+  white-space: nowrap;
 }
 
 .pipeline-link:hover {

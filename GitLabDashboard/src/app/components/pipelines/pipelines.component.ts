@@ -22,6 +22,7 @@ export class PipelinesComponent implements OnInit, OnDestroy {
   loadingPinned = signal(false);
   loadingOthers = signal(false);
   error = signal<string | null>(null);
+  retryingPipelines = signal<Set<number>>(new Set());
   
   pinnedProjects = computed(() => {
     const pinnedIds = this.pinService.pinnedIds();
@@ -57,6 +58,51 @@ export class PipelinesComponent implements OnInit, OnDestroy {
 
   isPinned(projectId: number): boolean {
     return this.pinService.isPinned(projectId);
+  }
+
+  isRetrying(projectId: number): boolean {
+    return this.retryingPipelines().has(projectId);
+  }
+
+  retryPipeline(project: ProjectWithPipeline): void {
+    if (!project.pipeline) {
+      return;
+    }
+
+    const projectId = project.id;
+    const pipelineId = project.pipeline.id;
+
+    // Add to retrying set
+    const retrying = new Set(this.retryingPipelines());
+    retrying.add(projectId);
+    this.retryingPipelines.set(retrying);
+
+    this.gitlabService.retryPipeline(projectId, pipelineId).subscribe({
+      next: (newPipeline) => {
+        // Update the project's pipeline with the new retried pipeline
+        const updatedProjects = this.projects().map(p => 
+          p.id === projectId 
+            ? { ...p, pipeline: newPipeline } 
+            : p
+        );
+        this.projects.set(updatedProjects);
+        
+        // Remove from retrying set
+        const retryingSet = new Set(this.retryingPipelines());
+        retryingSet.delete(projectId);
+        this.retryingPipelines.set(retryingSet);
+      },
+      error: (err) => {
+        console.error('Error retrying pipeline:', err);
+        // Remove from retrying set on error
+        const retryingSet = new Set(this.retryingPipelines());
+        retryingSet.delete(projectId);
+        this.retryingPipelines.set(retryingSet);
+        
+        // Show error message (you could add a toast notification here)
+        alert('Failed to retry pipeline. Please try again.');
+      }
+    });
   }
 
   loadPipelinesOptimized(): void {
@@ -230,6 +276,14 @@ export class PipelinesComponent implements OnInit, OnDestroy {
       case 'canceled': return '⊘';
       default: return '?';
     }
+  }
+
+  canRetryPipeline(status: string | null | undefined): boolean {
+    if (!status) return false;
+    const lowerStatus = status.toLowerCase();
+    // Can retry: failed, canceled, skipped
+    // Cannot retry: success, running, pending
+    return lowerStatus === 'failed' || lowerStatus === 'canceled' || lowerStatus === 'skipped';
   }
 }
 
