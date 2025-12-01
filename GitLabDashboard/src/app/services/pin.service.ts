@@ -5,7 +5,7 @@ import { Injectable, signal } from '@angular/core';
 })
 export class PinService {
   private readonly STORAGE_KEY = 'gitlab_pinned_repos';
-  private _pinnedIds = signal<Set<number>>(new Set());
+  private _pinnedIds = signal<number[]>([]);
   pinnedIds = this._pinnedIds.asReadonly();
 
   constructor() {
@@ -17,7 +17,7 @@ export class PinService {
     if (stored) {
       try {
         const ids = JSON.parse(stored) as number[];
-        this._pinnedIds.set(new Set(ids));
+        this._pinnedIds.set(ids);
       } catch (e) {
         console.error('Failed to parse pinned repos', e);
         this.clearPinned();
@@ -26,28 +26,43 @@ export class PinService {
   }
 
   private savePinnedIds(): void {
-    const ids = Array.from(this._pinnedIds());
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(ids));
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._pinnedIds()));
   }
 
   isPinned(projectId: number): boolean {
-    return this._pinnedIds().has(projectId);
+    return this._pinnedIds().includes(projectId);
   }
 
   togglePin(projectId: number): void {
-    const current = new Set(this._pinnedIds());
-    if (current.has(projectId)) {
-      current.delete(projectId);
+    const current = [...this._pinnedIds()];
+    const index = current.indexOf(projectId);
+    if (index > -1) {
+      current.splice(index, 1);
     } else {
-      current.add(projectId);
+      current.push(projectId);
     }
     this._pinnedIds.set(current);
     this.savePinnedIds();
   }
 
+  reorderPinned(fromIndex: number, toIndex: number): void {
+    const current = [...this._pinnedIds()];
+    const [moved] = current.splice(fromIndex, 1);
+    // Adjust toIndex: if moving down, we need to account for the removed item
+    const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+    current.splice(adjustedToIndex, 0, moved);
+    this._pinnedIds.set(current);
+    this.savePinnedIds();
+  }
+
+  getPinnedOrder(): number[] {
+    return [...this._pinnedIds()];
+  }
+
   clearPinned(): void {
-    this._pinnedIds.set(new Set());
+    this._pinnedIds.set([]);
     localStorage.removeItem(this.STORAGE_KEY);
   }
 }
+
 

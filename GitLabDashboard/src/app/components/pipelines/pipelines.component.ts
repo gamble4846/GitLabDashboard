@@ -25,13 +25,19 @@ export class PipelinesComponent implements OnInit, OnDestroy {
   retryingPipelines = signal<Set<number>>(new Set());
   
   pinnedProjects = computed(() => {
-    const pinnedIds = this.pinService.pinnedIds();
-    return this.projects().filter(p => pinnedIds.has(p.id));
+    const pinnedOrder = this.pinService.getPinnedOrder();
+    const pinnedMap = new Map(this.projects().filter(p => pinnedOrder.includes(p.id)).map(p => [p.id, p]));
+    // Return projects in the order specified by pinnedOrder
+    return pinnedOrder.map(id => pinnedMap.get(id)).filter((p): p is ProjectWithPipeline => p !== undefined);
   });
+  
+  draggingIndex = signal<number | null>(null);
+  dragOverIndex = signal<number | null>(null);
   
   otherProjects = computed(() => {
     const pinnedIds = this.pinService.pinnedIds();
-    return this.projects().filter(p => !pinnedIds.has(p.id));
+    const pinnedSet = new Set(pinnedIds);
+    return this.projects().filter(p => !pinnedSet.has(p.id));
   });
   
   private refreshSubscription?: Subscription;
@@ -58,6 +64,91 @@ export class PipelinesComponent implements OnInit, OnDestroy {
 
   isPinned(projectId: number): boolean {
     return this.pinService.isPinned(projectId);
+  }
+
+  onDragStart(event: DragEvent, index: number, dragElement: any): void {
+    if (!event.dataTransfer) return;
+    
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index.toString());
+    this.draggingIndex.set(index);
+    
+    // Create a custom drag image (ghost)
+    const handleElement = dragElement as HTMLElement;
+    const cardElement = handleElement?.closest('.project-card') as HTMLElement;
+    if (cardElement) {
+      // Clone the card for the ghost
+      const ghost = cardElement.cloneNode(true) as HTMLElement;
+      ghost.style.width = cardElement.offsetWidth + 'px';
+      ghost.style.opacity = '0.9';
+      ghost.style.transform = 'rotate(2deg)';
+      ghost.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)';
+      ghost.style.position = 'absolute';
+      ghost.style.top = '-1000px';
+      ghost.style.left = '-1000px';
+      ghost.style.pointerEvents = 'none';
+      ghost.style.zIndex = '10000';
+      document.body.appendChild(ghost);
+      
+      // Set the drag image
+      const rect = cardElement.getBoundingClientRect();
+      event.dataTransfer.setDragImage(ghost, rect.width / 2, rect.height / 2);
+      
+      // Clean up after a short delay
+      setTimeout(() => {
+        if (document.body.contains(ghost)) {
+          document.body.removeChild(ghost);
+        }
+      }, 0);
+      
+      // Make the original card semi-transparent
+      cardElement.style.opacity = '0.5';
+    }
+  }
+
+  onDragEnd(event: DragEvent): void {
+    this.draggingIndex.set(null);
+    this.dragOverIndex.set(null);
+    
+    // Restore opacity of all cards
+    const cards = document.querySelectorAll('.project-card');
+    cards.forEach(card => {
+      if (card instanceof HTMLElement) {
+        card.style.opacity = '1';
+      }
+    });
+  }
+
+  onDragOver(event: DragEvent, index: number): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    
+    const dragIndex = this.draggingIndex();
+    // Only show drop indicator if dragging to a different position
+    if (dragIndex !== null && dragIndex !== index) {
+      this.dragOverIndex.set(index);
+    } else {
+      this.dragOverIndex.set(null);
+    }
+  }
+
+  onDragLeave(): void {
+    // Don't clear immediately to prevent flickering
+    // Will be cleared when entering a new drop zone
+  }
+
+  onDrop(event: DragEvent, dropIndex: number): void {
+    event.preventDefault();
+    const dragIndex = this.draggingIndex();
+    
+    if (dragIndex !== null && dragIndex !== dropIndex) {
+      this.pinService.reorderPinned(dragIndex, dropIndex);
+    }
+    
+    this.draggingIndex.set(null);
+    this.dragOverIndex.set(null);
   }
 
   isRetrying(projectId: number): boolean {
@@ -123,9 +214,10 @@ export class PipelinesComponent implements OnInit, OnDestroy {
     this.gitlabService.getProjects().subscribe({
       next: (projects) => {
         // Separate pinned and other projects
-        const pinnedIds = this.pinService.pinnedIds();
-        const pinnedProjects = projects.filter(p => pinnedIds.has(p.id));
-        const otherProjects = projects.filter(p => !pinnedIds.has(p.id));
+        const pinnedOrder = this.pinService.getPinnedOrder();
+        const pinnedSet = new Set(pinnedOrder);
+        const pinnedProjects = projects.filter(p => pinnedSet.has(p.id));
+        const otherProjects = projects.filter(p => !pinnedSet.has(p.id));
         
         // Load pinned projects first (priority)
         if (pinnedProjects.length > 0) {

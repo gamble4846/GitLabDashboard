@@ -37,28 +37,49 @@
     </div>
     
     <div class="projects-grid">
-      @for (project of pinnedProjects(); track project.id) {
-        <div class="project-card card">
-          <div class="project-header">
-            <h3 class="project-name">{{ project.name }}</h3>
-            <div class="project-actions">
-              <button 
-                class="pin-button pinned" 
-                (click)="togglePin(project.id)"
-                [title]="'Unpin repository'"
-                aria-label="Unpin repository"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 1V15M8 1L4 5H6L8 3L10 5H12L8 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <a [href]="project.web_url" target="_blank" rel="noopener" class="project-link">
-                <span>View on GitLab</span>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11 1H3C1.89543 1 1 1.89543 1 3V11C1 12.1046 1.89543 13 3 13H11C12.1046 13 13 12.1046 13 11V3C13 1.89543 12.1046 1 11 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M5 9L9 5M9 5H5M9 5V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </a>
+      @for (project of pinnedProjects(); track project.id; let i = $index) {
+        <div 
+          class="project-card card"
+          [class.dragging]="draggingIndex() === i"
+          [class.drag-over]="dragOverIndex() === i"
+          (dragover)="onDragOver($event, i)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event, i)"
+        >
+          <div 
+            class="drag-handle-area"
+            draggable="true"
+            (dragstart)="onDragStart($event, i, $event.currentTarget)"
+            (dragend)="onDragEnd($event)"
+          >
+            <div class="project-header">
+              <div class="project-header-left">
+                <div class="drag-handle-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 4H10M6 8H10M6 12H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <h3 class="project-name">{{ project.name }}</h3>
+              </div>
+              <div class="project-actions">
+                <button 
+                  class="pin-button pinned" 
+                  (click)="togglePin(project.id)"
+                  [title]="'Unpin repository'"
+                  aria-label="Unpin repository"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1V15M8 1L4 5H6L8 3L10 5H12L8 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <a [href]="project.web_url" target="_blank" rel="noopener" class="project-link">
+                  <span>View on GitLab</span>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 1H3C1.89543 1 1 1.89543 1 3V11C1 12.1046 1.89543 13 3 13H11C12.1046 13 13 12.1046 13 11V3C13 1.89543 12.1046 1 11 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 9L9 5M9 5H5M9 5V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
           
