@@ -1,0 +1,88 @@
+<div class="pipelines-container">
+  <div class="pipelines-header">
+    <h1>Pipeline Monitoring</h1>
+    <p class="subtitle">All repositories with their latest pipeline status</p>
+  </div>
+
+  @if (loading() && projects().length === 0) {
+    <div class="loading-state">
+      <p>Loading pipelines...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-state card">
+      <p>{{ error() }}</p>
+      <button class="btn btn-primary" (click)="loadPipelines()">Retry</button>
+    </div>
+  }
+
+  @if (!loading() && !error() && projects().length === 0) {
+    <div class="empty-state card">
+      <p>No projects found. Make sure you have access to at least one GitLab project.</p>
+    </div>
+  }
+
+  @if (projects().length > 0) {
+    <div class="projects-grid">
+      @for (project of projects(); track project.id) {
+        <div class="project-card card">
+          <div class="project-header">
+            <h3 class="project-name">{{ project.name }}</h3>
+            <a [href]="project.web_url" target="_blank" rel="noopener" class="project-link">
+              <span>View on GitLab</span>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 1H3C1.89543 1 1 1.89543 1 3V11C1 12.1046 1.89543 13 3 13H11C12.1046 13 13 12.1046 13 11V3C13 1.89543 12.1046 1 11 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 9L9 5M9 5H5M9 5V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          
+          <p class="project-path">{{ project.path_with_namespace }}</p>
+
+          @if (project.pipeline) {
+            <div class="pipeline-info">
+              <div class="pipeline-status">
+                <span class="status-icon" [class]="getStatusClass(project.pipeline.status)">
+                  {{ getStatusIcon(project.pipeline.status) }}
+                </span>
+                <span class="status-text" [class]="getStatusClass(project.pipeline.status)">
+                  {{ project.pipeline.status | titlecase }}
+                </span>
+              </div>
+              
+              <div class="pipeline-details">
+                <div class="pipeline-detail">
+                  <span class="detail-label">Branch:</span>
+                  <span class="detail-value">{{ project.pipeline.ref }}</span>
+                </div>
+                <div class="pipeline-detail">
+                  <span class="detail-label">Updated:</span>
+                  <span class="detail-value">{{ project.pipeline.updated_at | date:'short' }}</span>
+                </div>
+              </div>
+
+              <a [href]="project.pipeline.web_url" target="_blank" rel="noopener" class="pipeline-link">
+                View Pipeline Details
+              </a>
+            </div>
+          } @else {
+            <div class="pipeline-info">
+              <div class="pipeline-status">
+                <span class="status-icon pipeline-status-pending">⏳</span>
+                <span class="status-text pipeline-status-pending">No Pipeline</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (loading() && projects().length > 0) {
+    <div class="refreshing-indicator">
+      <span>Refreshing...</span>
+    </div>
+  }
+</div>
+
