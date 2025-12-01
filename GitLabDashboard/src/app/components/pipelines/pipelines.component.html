@@ -178,7 +178,7 @@
     </div>
   }
 
-  @if (loading() && projects().length > 0) {
+  @if (refreshing()) {
     <div class="refreshing-indicator">
       <span>Refreshing...</span>
     </div>

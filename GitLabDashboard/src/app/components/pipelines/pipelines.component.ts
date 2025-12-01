@@ -18,6 +18,7 @@ export class PipelinesComponent implements OnInit, OnDestroy {
   
   projects = signal<ProjectWithPipeline[]>([]);
   loading = signal(true);
+  refreshing = signal(false);
   loadingPinned = signal(false);
   loadingOthers = signal(false);
   error = signal<string | null>(null);
@@ -61,8 +62,18 @@ export class PipelinesComponent implements OnInit, OnDestroy {
   loadPipelinesOptimized(): void {
     this.error.set(null);
     
+    // Check if this is a refresh (we already have projects)
+    const isRefresh = this.projects().length > 0;
+    
+    if (isRefresh) {
+      // For refreshes, show refreshing indicator but keep old content
+      this.refreshing.set(true);
+    } else {
+      // For initial load, show loading state
+      this.loading.set(true);
+    }
+    
     // Load projects first
-    this.loading.set(true);
     this.gitlabService.getProjects().subscribe({
       next: (projects) => {
         // Separate pinned and other projects
@@ -82,8 +93,10 @@ export class PipelinesComponent implements OnInit, OnDestroy {
               this.loadProjectsInBatches(otherProjects, (allWithPipelines) => {
                 // Combine and sort: pinned first, then others
                 const combined = [...pinnedWithPipelines, ...allWithPipelines];
+                // Only update projects once all data is loaded to prevent layout shift
                 this.projects.set(combined);
                 this.loading.set(false);
+                this.refreshing.set(false);
                 this.loadingOthers.set(false);
               }, pinnedWithPipelines);
             },
@@ -94,6 +107,7 @@ export class PipelinesComponent implements OnInit, OnDestroy {
               this.loadProjectsInBatches(otherProjects, (allWithPipelines) => {
                 this.projects.set(allWithPipelines);
                 this.loading.set(false);
+                this.refreshing.set(false);
                 this.loadingOthers.set(false);
               }, []);
             }
@@ -102,8 +116,10 @@ export class PipelinesComponent implements OnInit, OnDestroy {
           // No pinned projects, load all in batches
           this.loadingOthers.set(true);
           this.loadProjectsInBatches(otherProjects, (allWithPipelines) => {
+            // Only update projects once all data is loaded
             this.projects.set(allWithPipelines);
             this.loading.set(false);
+            this.refreshing.set(false);
             this.loadingOthers.set(false);
           });
         }
@@ -112,6 +128,7 @@ export class PipelinesComponent implements OnInit, OnDestroy {
         console.error('Error loading projects:', err);
         this.error.set('Failed to load projects. Please check your credentials.');
         this.loading.set(false);
+        this.refreshing.set(false);
         this.loadingPinned.set(false);
         this.loadingOthers.set(false);
       }
@@ -150,6 +167,7 @@ export class PipelinesComponent implements OnInit, OnDestroy {
     
     const results: ProjectWithPipeline[] = [];
     let completedBatches = 0;
+    const isInitialLoad = this.projects().length === 0;
     
     batches.forEach((batch, index) => {
       this.loadPipelinesForProjects(batch).subscribe({
@@ -157,14 +175,16 @@ export class PipelinesComponent implements OnInit, OnDestroy {
           results.push(...batchResults);
           completedBatches++;
           
-          // Update UI progressively as batches complete
-          if (index === 0) {
-            // First batch - show immediately with pinned projects
+          // Only update UI progressively on initial load (when no projects exist)
+          // On refresh, wait until all batches are complete to prevent layout shift
+          if (isInitialLoad && index === 0) {
+            // First batch on initial load - show immediately with pinned projects
             this.projects.set([...pinnedProjects, ...results]);
-          } else {
-            // Update with all loaded so far
+          } else if (isInitialLoad) {
+            // Subsequent batches on initial load - update progressively
             this.projects.set([...pinnedProjects, ...results]);
           }
+          // On refresh, don't update until all batches complete
           
           if (completedBatches === batches.length) {
             callback(results);
@@ -177,8 +197,10 @@ export class PipelinesComponent implements OnInit, OnDestroy {
           results.push(...batchWithoutPipelines);
           completedBatches++;
           
-          // Update UI even on error
-          this.projects.set([...pinnedProjects, ...results]);
+          // Only update UI on error if it's initial load
+          if (isInitialLoad) {
+            this.projects.set([...pinnedProjects, ...results]);
+          }
           
           if (completedBatches === batches.length) {
             callback(results);
