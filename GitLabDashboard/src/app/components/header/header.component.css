@@ -79,7 +79,7 @@
 }
 
 .hamburger-line.open:nth-child(1) {
-  transform: rotate(45deg) translate(0.5rem,0.5rem);
+  transform: rotate(45deg) translate(0.375rem, 0.375rem);
 }
 
 .hamburger-line.open:nth-child(2) {
@@ -87,7 +87,7 @@
 }
 
 .hamburger-line.open:nth-child(3) {
-  transform: rotate(-45deg) translate(0.5rem,-0.5rem);
+  transform: rotate(-45deg) translate(0.375rem, -0.375rem);
 }
 
 .header-nav {
@@ -115,6 +115,26 @@
 .nav-link.active {
   color: var(--primary);
   background-color: oklch(from var(--primary) l c h / 0.1);
+}
+
+.logout-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  color: var(--destructive);
+  background-color: oklch(from var(--destructive) l c h / 0.1);
+}
+
+.logout-button svg {
+  flex-shrink: 0;
 }
 
 .mobile-menu-overlay {
