@@ -359,8 +359,9 @@ export class PipelinesComponent implements OnInit, OnDestroy {
   }
 
   getCardStatusClass(project: ProjectWithPipeline): { [key: string]: boolean } {
+    // If no pipeline, return empty object to keep default dark background
     if (!project.pipeline || !project.pipeline.status) {
-      return { 'card-status-pending': true };
+      return {};
     }
     const status = project.pipeline.status.toLowerCase();
     if (status === 'success') {
