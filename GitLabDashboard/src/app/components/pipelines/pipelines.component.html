@@ -42,6 +42,7 @@
           class="project-card card"
           [class.dragging]="draggingIndex() === i"
           [class.drag-over]="dragOverIndex() === i"
+          [ngClass]="getCardStatusClass(project)"
           (dragover)="onDragOver($event, i)"
           (dragleave)="onDragLeave()"
           (drop)="onDrop($event, i)"
@@ -157,7 +158,7 @@
     
     <div class="projects-grid">
       @for (project of otherProjects(); track project.id) {
-        <div class="project-card card">
+        <div class="project-card card" [ngClass]="getCardStatusClass(project)">
           <div class="project-header">
             <h3 class="project-name">{{ project.name }}</h3>
             <div class="project-actions">

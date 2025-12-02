@@ -35,6 +35,22 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+/* Pipeline status background colors - Dark Theme */
+.card-status-pending {
+  background-color: oklch(25% 0.12 85) !important; /* Dark yellow */
+  border-color: oklch(40% 0.15 85) !important; /* Yellow border */
+}
+
+.card-status-success {
+  background-color: oklch(25% 0.12 145) !important; /* Dark green */
+  border-color: oklch(40% 0.15 145) !important; /* Green border */
+}
+
+.card-status-error {
+  background-color: oklch(25% 0.12 15) !important; /* Dark red */
+  border-color: oklch(40% 0.15 15) !important; /* Red border */
+}
+
 .project-card.dragging {
   opacity: 0.5 !important;
   transform: scale(0.98);

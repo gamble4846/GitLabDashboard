@@ -358,6 +358,22 @@ export class PipelinesComponent implements OnInit, OnDestroy {
     return `pipeline-status-${status.toLowerCase()}`;
   }
 
+  getCardStatusClass(project: ProjectWithPipeline): { [key: string]: boolean } {
+    if (!project.pipeline || !project.pipeline.status) {
+      return { 'card-status-pending': true };
+    }
+    const status = project.pipeline.status.toLowerCase();
+    if (status === 'success') {
+      return { 'card-status-success': true };
+    } else if (status === 'failed' || status === 'error') {
+      return { 'card-status-error': true };
+    } else if (status === 'pending') {
+      return { 'card-status-pending': true };
+    }
+    // For other statuses (running, canceled, skipped), return pending style
+    return { 'card-status-pending': true };
+  }
+
   getStatusIcon(status: string | null | undefined): string {
     if (!status) return '⏳';
     switch (status.toLowerCase()) {
