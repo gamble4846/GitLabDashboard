@@ -101,6 +101,32 @@
                   {{ project.pipeline.status | titlecase }}
                 </span>
               </div>
+
+              @if (project.pipeline.jobs && project.pipeline.jobs.length > 0) {
+                @let completion = getPipelineCompletion(project);
+                @let pendingCount = getPendingJobsCount(project);
+                <div class="pipeline-progress">
+                  <div class="progress-header">
+                    <span class="progress-label">Progress</span>
+                    <span class="progress-text">{{ completion.completed }}/{{ completion.total }} jobs</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div 
+                      class="progress-fill" 
+                      [style.width.%]="completion.percentage"
+                      [class.progress-success]="project.pipeline.status === 'success'"
+                      [class.progress-error]="project.pipeline.status === 'failed'"
+                      [class.progress-pending]="project.pipeline.status === 'pending' || project.pipeline.status === 'running'"
+                    ></div>
+                  </div>
+                  @if (pendingCount > 0) {
+                    <div class="pending-jobs">
+                      <span class="pending-icon">⏳</span>
+                      <span class="pending-text">{{ pendingCount }} {{ pendingCount === 1 ? 'job' : 'jobs' }} pending</span>
+                    </div>
+                  }
+                </div>
+              }
               
               <div class="pipeline-details">
                 <div class="pipeline-detail">
@@ -194,6 +220,32 @@
                   {{ project.pipeline.status | titlecase }}
                 </span>
               </div>
+
+              @if (project.pipeline.jobs && project.pipeline.jobs.length > 0) {
+                @let completion = getPipelineCompletion(project);
+                @let pendingCount = getPendingJobsCount(project);
+                <div class="pipeline-progress">
+                  <div class="progress-header">
+                    <span class="progress-label">Progress</span>
+                    <span class="progress-text">{{ completion.completed }}/{{ completion.total }} jobs</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div 
+                      class="progress-fill" 
+                      [style.width.%]="completion.percentage"
+                      [class.progress-success]="project.pipeline.status === 'success'"
+                      [class.progress-error]="project.pipeline.status === 'failed'"
+                      [class.progress-pending]="project.pipeline.status === 'pending' || project.pipeline.status === 'running'"
+                    ></div>
+                  </div>
+                  @if (pendingCount > 0) {
+                    <div class="pending-jobs">
+                      <span class="pending-icon">⏳</span>
+                      <span class="pending-text">{{ pendingCount }} {{ pendingCount === 1 ? 'job' : 'jobs' }} pending</span>
+                    </div>
+                  }
+                </div>
+              }
               
               <div class="pipeline-details">
                 <div class="pipeline-detail">

@@ -11,6 +11,13 @@ export interface GitLabProject {
   web_url: string;
 }
 
+export interface GitLabJob {
+  id: number;
+  status: 'success' | 'failed' | 'running' | 'pending' | 'canceled' | 'skipped';
+  name: string;
+  stage: string;
+}
+
 export interface GitLabPipeline {
   id: number;
   status: 'success' | 'failed' | 'running' | 'pending' | 'canceled' | 'skipped';
@@ -19,6 +26,7 @@ export interface GitLabPipeline {
   web_url: string;
   created_at: string;
   updated_at: string;
+  jobs?: GitLabJob[];
 }
 
 export interface ProjectWithPipeline extends GitLabProject {
@@ -85,6 +93,16 @@ export class GitLabService {
       `${this.getBaseUrl()}/projects/${projectId}/pipelines/${pipelineId}/retry`,
       {},
       { headers }
+    );
+  }
+
+  getPipelineJobs(projectId: number, pipelineId: number): Observable<GitLabJob[]> {
+    const headers = this.getHeaders();
+    return this.http.get<GitLabJob[]>(
+      `${this.getBaseUrl()}/projects/${projectId}/pipelines/${pipelineId}/jobs`,
+      { headers }
+    ).pipe(
+      catchError(() => of([]))
     );
   }
 }

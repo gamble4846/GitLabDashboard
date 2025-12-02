@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { GitLabService, ProjectWithPipeline, GitLabProject } from '../../services/gitlab.service';
 import { PinService } from '../../services/pin.service';
 import { interval, Subscription, forkJoin, of, Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-pipelines',
@@ -280,7 +280,16 @@ export class PipelinesComponent implements OnInit, OnDestroy {
     
     const pipelineRequests = projects.map(project =>
       this.gitlabService.getLatestPipeline(project.id).pipe(
-        map(pipeline => ({ ...project, pipeline } as ProjectWithPipeline)),
+        switchMap(pipeline => {
+          if (!pipeline) {
+            return of({ ...project, pipeline: null } as ProjectWithPipeline);
+          }
+          // Fetch jobs for the pipeline
+          return this.gitlabService.getPipelineJobs(project.id, pipeline.id).pipe(
+            map(jobs => ({ ...project, pipeline: { ...pipeline, jobs } } as ProjectWithPipeline)),
+            catchError(() => of({ ...project, pipeline } as ProjectWithPipeline))
+          );
+        }),
         catchError(() => of({ ...project, pipeline: null } as ProjectWithPipeline))
       )
     );
@@ -393,6 +402,31 @@ export class PipelinesComponent implements OnInit, OnDestroy {
     // Can retry: failed, canceled, skipped
     // Cannot retry: success, running, pending
     return lowerStatus === 'failed' || lowerStatus === 'canceled' || lowerStatus === 'skipped';
+  }
+
+  getPipelineCompletion(project: ProjectWithPipeline): { completed: number; total: number; percentage: number } {
+    if (!project.pipeline || !project.pipeline.jobs || project.pipeline.jobs.length === 0) {
+      return { completed: 0, total: 0, percentage: 0 };
+    }
+
+    const jobs = project.pipeline.jobs;
+    const total = jobs.length;
+    const completed = jobs.filter(job => 
+      job.status === 'success' || job.status === 'failed' || job.status === 'canceled' || job.status === 'skipped'
+    ).length;
+
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
+  }
+
+  getPendingJobsCount(project: ProjectWithPipeline): number {
+    if (!project.pipeline || !project.pipeline.jobs) {
+      return 0;
+    }
+    return project.pipeline.jobs.filter(job => job.status === 'pending' || job.status === 'running').length;
   }
 }
 
